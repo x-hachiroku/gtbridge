@@ -1,0 +1,10 @@
+{
+  "dependencies": {
+    "@electron/asar": "^4.0.0",
+    "@yao-pkg/pkg": "^6.6.0",
+    "asar": "^3.2.0"
+  },
+  "scripts": {
+    "build": "npx pkg ./_ZH_PATCH_INSTALLER.js --targets node18-win-x64 --output ./_ZH_PATCH_INSTALLER.exe"
+  }
+}
