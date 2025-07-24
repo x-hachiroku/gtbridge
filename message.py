@@ -23,8 +23,8 @@ POST_NORM_PATTERN = re.compile(r'[０-９Ａ-Ｚａ-ｚ]')
 
 
 _VALID_JA_CHARS = r'\u3040-\u309F\u30A0-\u30FF\u3400-\u4DBF\u4E00-\u9FFF'
-_VALID_SYMBOLS = r'0-9A-Za-z０-９Ａ-Ｚａ-ｚ\(\)（）《》…？！・ー―'
-NONJA_PATTERN = re.compile(r'['+ _VALID_SYMBOLS + ']*')
+VALID_JA_PATTERN = re.compile(r'[' + _VALID_JA_CHARS + r']')
+_VALID_SYMBOLS = r'0-9A-Za-z０-９Ａ-Ｚａ-ｚ\(\)（）《》…、？！ー―〇'
 
 _INVALID_CHARS_GROUP = r'([^' + _VALID_JA_CHARS + _VALID_SYMBOLS + r']*)'
 MESSAGE_PATTERN = re.compile(
@@ -36,25 +36,17 @@ MESSAGE_PATTERN = re.compile(
     re.DOTALL
 )
 
-
 BASE_REPL_TABLE = {
-    r'[\.。]{3}':        '…' ,
-    r'[,﹐]':            '，',
-    r'!':                '！',
-    r'\?':               '？',
-    r'&':                '＆',
-    r'([^0-9A-Za-z])\.': r'\1。',
-    r'([^0-9A-Za-z])~':  r'\1～',
+    r'[\.。]{3}':  '…' ,
     r'[\u2600-\u27BF]':  '～',
     r'[\u2010-\u2015\u2500-\u257f\uFF0D]{1,2}': '——',
     r'[\u25A0-\u25FF\u26AA-\u26AC\u2B00-\u2BFF\U0001F300-\U0001F5FF\U0001F780-\U0001F7FF]': '〇',
+    r'[❶➀➊]': '1', r'[❷➁➋]': '2', r'[❸➂➌]': '3', r'[❹➃➍]': '4', r'[❺➄➎]': '5',
+    r'[❻➅➏]': '6', r'[❼➆➐]': '7', r'[❽➇➑]': '8', r'[❾➈➒]': '9', r'[❿➉➓]': '10',
 }
 
 PRE_REPL_TABLE = {
     r'[·˙·•․‧∙⋅⸱⸳⸳ꞏ]': '・',
-    r'[\u2010-\u2015\u2500-\u257F\uFF0D]': '―',
-    r'[❶➀➊]': '1', r'[❷➁➋]': '2', r'[❸➂➌]': '3', r'[❹➃➍]': '4', r'[❺➄➎]': '5',
-    r'[❻➅➏]': '6', r'[❼➆➐]': '7', r'[❽➇➑]': '8', r'[❾➈➒]': '9', r'[❿➉➓]': '10',
 }
 
 HALFWIDTH_NEG_LOOKBEHIND = r'(?<![\x01-\x024F])'
@@ -105,7 +97,7 @@ class MessageList:
 
     def append(self, text, name='', original='', pre='', post='', tags=None):
         if original == '':
-            original = text
+            original = pre+text+post
         if tags is None:
             tags = []
 
@@ -114,22 +106,22 @@ class MessageList:
         post = _post + post
 
         for bracket in BRACKETS:
-            if pre.count(bracket[0]) < post.count(bracket[1]):
-                extra, post = post.split(bracket[1], 1)
-                content = content +  extra + bracket[1]
-            elif pre.count(bracket[0]) > post.count(bracket[1]):
+            if content.count(bracket[0]) < content.count(bracket[1]) and pre.count(bracket[0]) > 0:
                 pre, extra = pre.split(bracket[0], 1)
                 content = bracket[0] + extra + content
+            elif content.count(bracket[0]) > content.count(bracket[1]) and post.count(bracket[1]) > 0:
+                extra, post = post.split(bracket[1], 1)
+                content = content +  extra + bracket[1]
             if content.count(bracket[0]) != content.count(bracket[1]):
                 tags.append('brackets')
 
-        if NONJA_PATTERN.fullmatch(content):
+        if not VALID_JA_PATTERN.search(content):
             self.messages.append(MessageEntity(
                 name     = name,
                 original = original,
                 message  = '',
-                pre      = text,
-                post     = '',
+                pre      = pre + content,
+                post     = post,
                 tags     = tags,
             ))
 
@@ -189,8 +181,12 @@ def load(filename):
 
     messages = []
     for i in data:
-        if i['message'] and i['message'][-1] == '。':
-            i['message'] = i['message'][:-1]
+        if len(i['message']) > 0:
+            if i['message'][-1] == '。':
+                i['message'] = i['message'][:-1]
+            if i['message'][0] == '「' and i['message'][-1] == '」':
+                i['message'] = i['message'][1:-1]
+
         messages.append(MessageEntity(
             name     = i['name'],
             original = i['original'],
