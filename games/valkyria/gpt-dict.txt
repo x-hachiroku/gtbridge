@@ -1,0 +1,4 @@
+りんね	铃音	gril, 智之's younger sister
+茉麻	茉麻	gril, 武人's younger sister
+智之	智之	male, player, 铃音's older brother
+武人	武人    male, player, 茉麻's older brother
