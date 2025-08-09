@@ -1,5 +1,5 @@
 import json
-from message import MessageList
+from gtbridge import MessageList
 
 
 with open('./data/ManualTransFile.json') as f:
