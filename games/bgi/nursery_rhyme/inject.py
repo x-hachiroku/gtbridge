@@ -2,8 +2,7 @@ import os
 import json
 
 from patterns import *
-from message import load
-
+from gtbridge import load
 
 def name_replacer(match):
     if match.group(1):
