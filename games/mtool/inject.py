@@ -1,5 +1,5 @@
 import json
-from message import load
+from gtbridge import load
 
 translated_messages = load('./data/galtransl.json')
 

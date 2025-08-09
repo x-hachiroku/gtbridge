@@ -1,7 +1,7 @@
 import re
 import os
 
-from message import MessageList
+from gtbridge import MessageList
 
 MESSAGE_PATTERN = re.compile(
     r'(\[tb_start_text mode=1 \]\n*' + r'#(.*?)\n+)' +
