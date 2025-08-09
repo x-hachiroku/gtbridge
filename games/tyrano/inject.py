@@ -3,7 +3,7 @@ import re
 import json
 from glob import glob
 from pathlib import Path
-from message import load
+from gtbridge import load
 
 
 NAME_PATTERN = re.compile(
