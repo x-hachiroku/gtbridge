@@ -1,6 +1,6 @@
 import os
 import json
-from message import load
+from gtbridge import load
 from patterns import *
 
 
