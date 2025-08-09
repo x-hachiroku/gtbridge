@@ -1,6 +1,6 @@
 import os
 
-from message import MessageList
+from gtbridge import MessageList
 from patterns import *
 
 if not os.path.isdir('./data/original_json'):
