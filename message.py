@@ -121,8 +121,8 @@ class MessageList:
                 name     = name,
                 original = original,
                 message  = '',
-                pre      = text,
-                post     = '',
+                pre      = pre + content,
+                post     = post,
                 tags     = tags,
             ))
 
@@ -182,8 +182,12 @@ def load(filename):
 
     messages = []
     for i in data:
-        if i['message'] and i['message'][-1] == '。':
-            i['message'] = i['message'][:-1]
+        if len(i['message']) > 0:
+            if i['message'][-1] == '。':
+                i['message'] = i['message'][:-1]
+            if i['message'][0] == '「' and i['message'][-1] == '」':
+                i['message'] = i['message'][1:-1]
+
         messages.append(MessageEntity(
             name     = i['name'],
             original = i['original'],
