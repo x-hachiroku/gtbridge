@@ -1,0 +1,5 @@
+みお	美樱	girl
+先生	老师	man, player
+ブレッドマスターズ	面包大师	card game, 縮めてブレマス
+ブレマス	面包大师	card game
+emb exp	emb exp	system variable, usually represent a name or a number, keep as is
