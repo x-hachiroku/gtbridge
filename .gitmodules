@@ -1,0 +1,3 @@
+[submodule "games/livemaker/pylivemaker"]
+	path = games/livemaker/pylivemaker
+	url = git@github.com:x-hachiroku/pylivemaker.git
