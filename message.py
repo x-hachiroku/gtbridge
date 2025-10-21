@@ -144,11 +144,11 @@ class MessageList:
             ))
 
     def flush(self, filename):
-        count =  len(self.messages)
+        count =  len(list(filter(lambda x: x.message, self.messages)))
         if count > 0:
             with open(filename, 'w') as f:
                 json.dump([asdict(x) for x in self.messages], f, ensure_ascii=False, indent=2)
-            self.messages = []
+        self.messages = []
         return count
 
     def dump_stats(self, filename=None):
@@ -184,6 +184,7 @@ def load(filename):
         if len(i['message']) > 0:
             if i['message'][-1] == '。':
                 i['message'] = i['message'][:-1]
+        if len(i['message']) > 0:
             if i['message'][0] == '「' and i['message'][-1] == '」':
                 i['message'] = i['message'][1:-1]
 
