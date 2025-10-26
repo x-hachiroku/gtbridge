@@ -1,0 +1,3 @@
+[submodule "games/favorite/fvp"]
+	path = games/favorite/fvp
+	url = git@github.com:x-hachiroku/fvp.git
