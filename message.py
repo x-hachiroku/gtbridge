@@ -106,12 +106,20 @@ class MessageList:
         post = _post + post
 
         for bracket in BRACKETS:
-            if content.count(bracket[0]) < content.count(bracket[1]) and pre.count(bracket[0]) > 0:
+            if (bracket[0] in pre and (
+                content.count(bracket[0]) < content.count(bracket[1])
+                or content.find(bracket[0]) > content.find(bracket[1])
+            )):
                 pre, extra = pre.split(bracket[0], 1)
                 content = bracket[0] + extra + content
-            elif content.count(bracket[0]) > content.count(bracket[1]) and post.count(bracket[1]) > 0:
+
+            if (bracket[1] in post and (
+                content.count(bracket[0]) > content.count(bracket[1])
+                or content.rfind(bracket[0]) > content.rfind(bracket[1])
+            )):
                 extra, post = post.split(bracket[1], 1)
                 content = content +  extra + bracket[1]
+
             if content.count(bracket[0]) != content.count(bracket[1]):
                 tags.append('brackets')
 
