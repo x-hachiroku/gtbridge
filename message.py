@@ -24,7 +24,7 @@ POST_NORM_PATTERN = re.compile(r'[０-９Ａ-Ｚａ-ｚ]')
 
 _VALID_JA_CHARS = r'\u3005\u3006\u3040-\u309F\u30A1-\u30FA\u30FC-\u30FF\u3400-\u4DBF\u4E00-\u9FFF'
 VALID_JA_PATTERN = re.compile(r'[' + _VALID_JA_CHARS + r']')
-_VALID_SYMBOLS = r'0-9A-Za-z０-９Ａ-Ｚａ-ｚ\(\)（）《》…、？！ー―〇'
+_VALID_SYMBOLS = r'0-9A-Za-z０-９Ａ-Ｚａ-ｚ\(\)（）《》…、?？!！%％ー―〇'
 
 _INVALID_CHARS_GROUP = r'([^' + _VALID_JA_CHARS + _VALID_SYMBOLS + r']*)'
 MESSAGE_PATTERN = re.compile(

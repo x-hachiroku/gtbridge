@@ -4,3 +4,6 @@
 [submodule "games/favorite/fvp"]
 	path = games/favorite/fvp
 	url = git@github.com:x-hachiroku/fvp.git
+[submodule "games/rpgmaker/RPG-Maker-MV-Decrypter"]
+	path = games/rpgmaker/RPG-Maker-MV-Decrypter
+	url = git@github.com:x-hachiroku/RPG-Maker-MV-Decrypter.git
