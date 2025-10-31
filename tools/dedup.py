@@ -20,6 +20,7 @@ if __name__ == '__main__':
     else:
         srcs = [Path(args.src)]
 
+
     if args.extract:
         deduped = {}
         for src in srcs:
@@ -37,6 +38,13 @@ if __name__ == '__main__':
         for src in srcs:
             with open(src) as f:
                 original = json.load(f)
-            injected = [deduped_dict[(message['name'], message['original'])] for message in original]
+            injected = []
+            for message in original:
+                if (message['name'], message['original']) in deduped_dict:
+                    injected.append(deduped_dict[(message['name'], message['original'])])
+                else:
+                    injected.append(message)
+                    if message['message']:
+                        print(f"Warning: Message not found in deduped for {src}: {message['name']}: {message['original']}")
             with open(src, 'w') as f:
                 json.dump(injected, f, indent=2, ensure_ascii=False)
