@@ -145,7 +145,7 @@ class MessageList:
             self.messages.append(MessageEntity(
                 name     = name,
                 original = original,
-                message  = content,
+                message  = '「' + content + '」', # so galtransl wont mess up quotes
                 pre      = pre,
                 post     = post,
                 tags     = tags,
@@ -189,15 +189,19 @@ def load(filename):
 
     messages = []
     for i in data:
+        if len(i['message']) > 0:
+            assert i['message'][0] == '「' and i['message'][-1] == '」'
+            i['message'] = i['message'][1:-1]
+
         if len(i['message']) > 0 and i['message'][-1] == '。':
                 i['message'] = i['message'][:-1]
-        if len(i['message']) > 1 and i['message'][0] == '「' and i['message'][-1] == '」':
-                i['message'] = i['message'][1:-1]
+
+        message = postprocess(i['pre']+i['message']+i['post'])
 
         messages.append(MessageEntity(
             name     = i['name'],
             original = i['original'],
-            message  = postprocess(i['pre']+i['message']+i['post']),
+            message  = message,
             pre      = '',
             post     = '',
             tags     = i['tags'],
