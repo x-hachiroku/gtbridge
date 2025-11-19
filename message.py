@@ -141,12 +141,6 @@ class MessageList:
         else:
             self.message_count += 1
             self.char_conut += len(content)
-
-            if name:
-                if name not in self.names:
-                    self.names[name] = 0
-                self.names[name] += 1
-
             self.messages.append(MessageEntity(
                 name     = name,
                 original = original,
@@ -155,6 +149,11 @@ class MessageList:
                 post     = post,
                 tags     = tags,
             ))
+
+        if name:
+            if name not in self.names:
+                self.names[name] = 0
+            self.names[name] += 1
 
     def flush(self, filename):
         count =  len(self.messages)
