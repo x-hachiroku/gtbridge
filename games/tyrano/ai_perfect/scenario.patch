@@ -1,0 +1,266 @@
+diff --git a/x00_01prologue.ks b/x00_01prologue.ks
+index 73d8f23..285807c 100644
+--- a/x00_01prologue.ks
++++ b/x00_01prologue.ks
+@@ -535,7 +535,7 @@ TYRANO.kag.ftag.startTag("jump", { target: "sonota_daiissei_3" });
+ [commit  ]
+ [cm  ]
+ [tb_start_tyrano_code]
+-[eval exp="sf.a_playername = String(sf.a_playername || '')"]
++[eval exp="sf.a_playername = String(sf.a_playername || 'ろりこん')"]
+ 
+ [if exp="sf.a_playername.length === 0 || sf.a_playername.match(/^[ぁ-ん]+$/) === null"]
+ [eval exp="console.log('Invalid input: sf.a_playername = ' + sf.a_playername + ', jumping to kidou1_return')"]
+@@ -5038,4 +5038,4 @@ PC版の場合は、この後自動でアプリが終了します。スマホ版
+ [wait time=300]
+ 
+ [jump  storage="x00_01prologue.ks"  target="*menu_g_sentaku"  ]
+-[s  ]
+\ No newline at end of file
++[s  ]
+diff --git a/x00_03honpen.ks b/x00_03honpen.ks
+index b4c3ace..1047a43 100644
+--- a/x00_03honpen.ks
++++ b/x00_03honpen.ks
+@@ -939,11 +939,11 @@
+ [_tb_end_tyrano_code]
+ 
+ [tb_start_tyrano_code]
+-[if exp="f.b_onasiji_syurui==1]
++[if exp="f.b_onasiji_syurui==1"]
+ [eval exp="tf.shikoshikosokudo_hosei=0"]
+ [endif]
+ 
+-[if exp="f.b_onasiji_syurui==5]
++[if exp="f.b_onasiji_syurui==5"]
+ [eval exp="tf.shikoshikosokudo_hosei=0"]
+ [eval exp="tf.se_rand = Math.floor(Math.random() * 3)"]
+ [if exp="tf.se_rand == 0"]
+@@ -958,19 +958,19 @@
+ [jump  target="*shikoshikovocut"  storage=""  ]
+ [endif]
+ 
+-[if exp="f.b_onasiji_syurui==6]
++[if exp="f.b_onasiji_syurui==6"]
+ [eval exp="tf.shikoshikosokudo_hosei=0"]
+ [endif]
+ 
+-[if exp="f.b_onasiji_syurui==2]
++[if exp="f.b_onasiji_syurui==2"]
+ [eval exp="tf.shikoshikosokudo_hosei=45"]
+ [endif]
+ 
+-[if exp="f.b_onasiji_syurui==3]
++[if exp="f.b_onasiji_syurui==3"]
+ [eval exp="tf.shikoshikosokudo_hosei=15"]
+ [endif]
+ 
+-[if exp="f.b_onasiji_syurui==4]
++[if exp="f.b_onasiji_syurui==4"]
+ [eval exp="tf.shikoshikosokudo_hosei_ruikei=0"]
+ [eval exp="tf.shikoshikosokudo_hosei=[-30,-15,0,15,30][Math.floor(Math.random()*5)]"]
+ [eval exp="tf.shikoshikosokudo_hosei_ruikei = tf.shikoshikosokudo_hosei_ruikei + tf.shikoshikosokudo_hosei"]
+@@ -2536,7 +2536,7 @@ TYRANO.kag.variable.tf.value = TYRANO.kag.variable.sf[TYRANO.kag.variable.tf.var
+ [eval exp="tf.message = 'プラス２０'"]
+ [playse buf=2 storage=ai/shiji_onashiji_j-1_f.ogg]
+ [endif]
+-[if exp="f.b_next_mokuhyou >= 25 ]
++[if exp="f.b_next_mokuhyou >= 25"]
+ [eval exp="tf.message = 'プラス３０'"]
+ [playse buf=2 storage=ai/shiji_onashiji_j-1_g.ogg]
+ [endif]
+@@ -4366,7 +4366,7 @@ tf.value = eval(tf.var_name);  // ← ここが重要！
+ [_tb_end_text]
+ 
+ [camera  time="1000"  zoom="1.9"  wait="true"  ease_type="ease-in"  x="0"  rotate="0"  y="0"  ]
+-[reset_camera  time="1000"  wait="true"  ease_type="ease-out"  ]
++[reset_camera  time="500"  wait="false"  ease_type="ease-out"  ]
+ [tb_start_tyrano_code]
+ [camera time="0" zoom="1" wait="true" x="0" y="0" ease_type="ease" ]
+ [_tb_end_tyrano_code]
+@@ -11661,6 +11661,8 @@ AIオナサポは、過去のおちんちんのデータを生かすことで成
+ *giveup
+ *giveupstep
+ 
++[reset_camera  time="1000"  wait="false"  ease_type="ease-out"  ]
++
+ [wait_cancel]
+ [stopse buf=0]
+ [stopse buf=1]
+@@ -16656,6 +16658,7 @@ AIオナサポは、過去のおちんちんのデータを生かすことで成
+ [eval exp="tf.inst_now_0 = 1"]
+ [jump storage="x00_03honpen.ks" target="*endofkyuukei"]
+ *instback1
++[eval exp="tf.inst_now_0 = 2"]
+ 
+ [jump target="*kyuukei_install_c"]
+ 
+@@ -16883,6 +16886,7 @@ AIオナサポは、過去のおちんちんのデータを生かすことで成
+ [eval exp="tf.inst_now_0 = 3"]
+ [jump storage="x00_03honpen.ks" target="*endofkyuukei"]
+ *instback3
++[eval exp="tf.inst_now_0 = 4"]
+ 
+ [if exp="tf.instshitsumon == 1"]
+   [jump target="*kyuukei_install_g"]
+@@ -17505,6 +17509,10 @@ Bカップね。思いの外あると思ったかしら？こんな角度だか
+ [eval exp="tf.inst_now_0 = 6"]
+ [jump storage="x00_03honpen.ks" target="*endofkyuukei"]
+ *instback6
++[eval exp="tf.inst_now_0 = 0"]
++[if exp="f.b_today_onashiji_now == 9"]
++[eval exp="tf.inst_now_0 = 5"]
++[endif]
+ 
+ [tb_start_tyrano_code]
+ [freeimage layer=1]
+@@ -17574,6 +17582,10 @@ Bカップね。思いの外あると思ったかしら？こんな角度だか
+ [eval exp="tf.inst_now_0 = 7"]
+ [jump storage="x00_03honpen.ks" target="*endofkyuukei"]
+ *instback7
++[eval exp="tf.inst_now_0 = 0"]
++[if exp="f.b_today_onashiji_now == 9"]
++[eval exp="tf.inst_now_0 = 5"]
++[endif]
+ 
+ [tb_start_tyrano_code]
+ [freeimage layer=1]
+@@ -17666,6 +17678,10 @@ Bカップね。思いの外あると思ったかしら？こんな角度だか
+ [eval exp="tf.inst_now_0 = 8"]
+ [jump storage="x00_03honpen.ks" target="*endofkyuukei"]
+ *instback8
++[eval exp="tf.inst_now_0 = 0"]
++[if exp="f.b_today_onashiji_now == 9"]
++[eval exp="tf.inst_now_0 = 5"]
++[endif]
+ 
+ [tb_start_tyrano_code]
+ [freeimage layer=1]
+@@ -17759,6 +17775,10 @@ Bカップね。思いの外あると思ったかしら？こんな角度だか
+ [eval exp="tf.inst_now_0 = 9"]
+ [jump storage="x00_03honpen.ks" target="*endofkyuukei"]
+ *instback9
++[eval exp="tf.inst_now_0 = 0"]
++[if exp="f.b_today_onashiji_now == 9"]
++[eval exp="tf.inst_now_0 = 5"]
++[endif]
+ 
+ [tb_start_tyrano_code]
+ [freeimage layer=1]
+@@ -17851,6 +17871,10 @@ Bカップね。思いの外あると思ったかしら？こんな角度だか
+ [eval exp="tf.inst_now_0 = 10"]
+ [jump storage="x00_03honpen.ks" target="*endofkyuukei"]
+ *instback10
++[eval exp="tf.inst_now_0 = 0"]
++[if exp="f.b_today_onashiji_now == 9"]
++[eval exp="tf.inst_now_0 = 5"]
++[endif]
+ 
+ [tb_start_tyrano_code]
+ [freeimage layer=1]
+@@ -17943,6 +17967,10 @@ Bカップね。思いの外あると思ったかしら？こんな角度だか
+ [eval exp="tf.inst_now_0 = 11"]
+ [jump storage="x00_03honpen.ks" target="*endofkyuukei"]
+ *instback11
++[eval exp="tf.inst_now_0 = 0"]
++[if exp="f.b_today_onashiji_now == 9"]
++[eval exp="tf.inst_now_0 = 5"]
++[endif]
+ 
+ [tb_start_tyrano_code]
+ [freeimage layer=1]
+@@ -18035,6 +18063,10 @@ Bカップね。思いの外あると思ったかしら？こんな角度だか
+ [eval exp="tf.inst_now_0 = 12"]
+ [jump storage="x00_03honpen.ks" target="*endofkyuukei"]
+ *instback12
++[eval exp="tf.inst_now_0 = 0"]
++[if exp="f.b_today_onashiji_now == 9"]
++[eval exp="tf.inst_now_0 = 5"]
++[endif]
+ 
+ [image storage=ai_ashi.png layer=1]
+ 
+diff --git a/x00_05_4daunaa.ks b/x00_05_4daunaa.ks
+index ed0a3af..7406ae0 100644
+--- a/x00_05_4daunaa.ks
++++ b/x00_05_4daunaa.ks
+@@ -460,7 +460,7 @@
+ 
+ [tb_start_text mode=1 ]
+ #ダウナーな妹
+-次は、『一番好きな年齢は[emb exp=”sf.a_status_29"]歳のロリコンでーす♡』…です。さっきより大きな声で、せーの…。[p]
++次は、『一番好きな年齢は[emb exp="sf.a_status_29"]歳のロリコンでーす♡』…です。さっきより大きな声で、せーの…。[p]
+ [_tb_end_text]
+ 
+ 
+@@ -482,7 +482,7 @@
+ 
+ [tb_start_text mode=1 ]
+ #ダウナーな妹
+-次は、『おちんちんが[emb exp=”sf.a_status_20"]センチしかないよわよわ雑魚男でーす♡』…です。さっきより大きな声で、せーの…。[p]
++次は、『おちんちんが[emb exp="sf.a_status_20"]センチしかないよわよわ雑魚男でーす♡』…です。さっきより大きな声で、せーの…。[p]
+ [_tb_end_text]
+ 
+ 
+@@ -504,7 +504,7 @@
+ 
+ [tb_start_text mode=1 ]
+ #ダウナーな妹
+-次は、『御年[emb exp=”sf.a_status_25"]歳にもなってオナニーが趣味の変態でーす♡』…です。さっきより大きな声で、せーの…。[p]
++次は、『御年[emb exp="sf.a_status_25"]歳にもなってオナニーが趣味の変態でーす♡』…です。さっきより大きな声で、せーの…。[p]
+ [_tb_end_text]
+ 
+ 
+diff --git a/x03_honpen.ks b/x03_honpen.ks
+index ba32919..774fbc7 100644
+--- a/x03_honpen.ks
++++ b/x03_honpen.ks
+@@ -1160,7 +1160,7 @@ TYRANO.kag.stat.charas['ミルク'].jname = 'ミルク'
+ [_tb_end_text]
+ 
+ [tb_start_tyrano_code]
+-[deffont size="0" face="sans-serif,'メイリオ'" color="0x000000"]
++[deffont size="30" face="sans-serif,'メイリオ'" color="0xAAA"]
+ [resetfont]
+ [_tb_end_tyrano_code]
+ 
+@@ -3987,17 +3987,17 @@ TYRANO.kag.stat.charas['ミルク'].jname = 'ミルク'
+ [playse buf=2 storage=hutago_miruku/scene6a-1_a.ogg]
+ [endif]
+ 
+-[if exp="sf.a_status_28==2]
++[if exp="sf.a_status_28==2"]
+ [eval exp="tf.message = '家以外の場所'"]
+ [playse buf=2 storage=hutago_miruku/scene6a-1_b.ogg]
+ [endif]
+ 
+-[if exp="sf.a_status_28==3]
++[if exp="sf.a_status_28==3"]
+ [eval exp="tf.message = '家以外の場所'"]
+ [playse buf=2 storage=hutago_miruku/scene6a-1_b.ogg]
+ [endif]
+ 
+-[if exp="sf.a_status_28==4]
++[if exp="sf.a_status_28==4"]
+ [eval exp="tf.message = 'お外の個室'"]
+ [playse buf=2 storage=hutago_miruku/scene6a-1_c.ogg]
+ [endif]
+diff --git a/x04_honpen.ks b/x04_honpen.ks
+index 7282d9f..4823c27 100644
+--- a/x04_honpen.ks
++++ b/x04_honpen.ks
+@@ -5604,12 +5604,12 @@ TYRANO.kag.stat.charas['つむぎ'].jname = 'つむぎ'
+ [playse buf=2 storage=gamble_mio/part3_teach1-2_b.ogg]
+ [endif]
+ 
+-[if exp="sf.a_status_29>=13]
++[if exp="sf.a_status_29>=13"]
+ [eval exp="tf.message = '変態マゾヒスト'"]
+ [playse buf=2 storage=gamble_mio/part3_teach1-2_c.ogg]
+ [endif]
+ 
+-[if exp="sf.a_status_29==0]
++[if exp="sf.a_status_29==0"]
+ [eval exp="tf.message = '変態マゾヒスト'"]
+ [playse buf=2 storage=gamble_mio/part3_teach1-2_c.ogg]
+ [endif]
