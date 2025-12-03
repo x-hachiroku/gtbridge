@@ -30,15 +30,31 @@ def parse_line(line):
     if not line:
         return {}
 
-    match line[0]:
-        case '[':
-            pattern = element
-        case '@':
-            pattern = script
-        case _:
-            return {}
+    try:
+        match line[0]:
+            case '[':
+                pattern = element
+            case '@':
+                pattern = script
+            case _:
+                return {}
 
-    return pattern.parseString(line).asDict()
+        return pattern.parseString(line).asDict()
+    except Exception:
+        print(f"Failed to parse line: {line}")
+        return {}
+
+
+def construct_tag(parsed):
+    if 'tag' not in parsed:
+        return ''
+
+    line = f"[{parsed['tag']}"
+    for key, value in parsed.items():
+        if key != 'tag':
+            line += f' {key}="{value}"'
+    line += ']'
+    return line
 
 
 if __name__ == "__main__":
@@ -48,3 +64,4 @@ if __name__ == "__main__":
         '@call storage="tyrano.ks"'
     ):
         print(parse_line(sample))
+        print(construct_tag(parse_line(sample)))
