@@ -39,9 +39,7 @@ MESSAGE_PATTERN = re.compile(
 
 _BASE_REPL_TABLE = {
     r'[\.。]{3}':  '…' ,
-    r'[\u2600-\u27BF]':  '～',
     r'[\u2010-\u2015\u2500-\u257f\uFF0D]{1,2}': '——',
-    r'[\u25A0-\u25FF\u26AA-\u26AC\u2B00-\u2BFF\U0001F300-\U0001F5FF\U0001F780-\U0001F7FF]': '〇',
     r'[❶➀➊]': '1', r'[❷➁➋]': '2', r'[❸➂➌]': '3', r'[❹➃➍]': '4', r'[❺➄➎]': '5',
     r'[❻➅➏]': '6', r'[❼➆➐]': '7', r'[❽➇➑]': '8', r'[❾➈➒]': '9', r'[❿➉➓]': '10',
 }
@@ -65,10 +63,17 @@ _WIDTH_POST_REPL_TABLE = {
     HALFWIDTH_NEG_LOOKBEHIND + r' *& *':    '＆',
 }
 
+_GBK_REPL_TABLE = {
+    r'[\u2600-\u27BF]':  '～',
+    r'[\u25A0-\u25FF\u26AA-\u26AC\u2B00-\u2BFF\U0001F300-\U0001F5FF\U0001F780-\U0001F7FF]': '〇',
+}
+
+
 BASE_REPL_TABLE = { re.compile(k) : v for k, v in _BASE_REPL_TABLE.items() }
 PRE_REPL_TABLE = { re.compile(k) : v for k, v in _PRE_REPL_TABLE.items() }
 POST_REPL_TABLE = { re.compile(k) : v for k, v in _POST_REPL_TABLE.items() }
 WIDTH_POST_REPL_TABLE = { re.compile(k) : v for k, v in _WIDTH_POST_REPL_TABLE.items() }
+GBK_REPL_TABLE = { re.compile(k) : v for k, v in _GBK_REPL_TABLE.items() }
 PRE_REPL_TABLE.update(BASE_REPL_TABLE)
 POST_REPL_TABLE.update(BASE_REPL_TABLE)
 
@@ -94,11 +99,14 @@ def preprocess(text):
 
 
 class MessageList:
-    def __init__(self):
+    def __init__(self, gbk=False):
         self.messages = []
         self.message_count = 0
         self.char_conut = 0
         self.names = {}
+
+        if gbk:
+            PRE_REPL_TABLE.update(GBK_REPL_TABLE)
 
     def append(self, text, name='', original='', pre='', post='', tags=None):
         if original == '':
@@ -115,7 +123,7 @@ class MessageList:
                 content.count(bracket[0]) < content.count(bracket[1])
                 or content.find(bracket[0]) > content.find(bracket[1])
             )):
-                pre, extra = pre.split(bracket[0], 1)
+                pre, extra = pre.rsplit(bracket[0], 1)
                 content = bracket[0] + extra + content
 
             if (bracket[1] in post and (
@@ -126,7 +134,7 @@ class MessageList:
                 content = content +  extra + bracket[1]
 
             if content.count(bracket[0]) != content.count(bracket[1]):
-                tags.append('brackets')
+                tags.append('BRACKETS')
 
         if not VALID_JA_PATTERN.search(content):
             self.messages.append(MessageEntity(
@@ -192,9 +200,12 @@ def to_fullwidth(s: str) -> str:
             result.append(ch)
     return ''.join(result)
 
-def load(filename, fullwidth=False):
+def load(filename, fullwidth=False, gbk=False):
     if fullwidth:
         POST_REPL_TABLE.update(WIDTH_POST_REPL_TABLE)
+
+    if gbk:
+        POST_REPL_TABLE.update(GBK_REPL_TABLE)
 
     with open(filename, 'r') as f:
         data = json.load(f)

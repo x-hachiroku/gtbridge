@@ -1,73 +1,85 @@
-import os
 import re
 import json
+import itertools
 from pathlib import Path
+
 from gtbridge import load
+from extract import MESSAGE_PATTERN, PTEXT_PATTERN, EVAL_TEXT_PATTERN, CONDITION_TEXT_PATTERN, MESSAGE_LIST_PATTERN
 
 
-NAME_PATTERN = re.compile(
-    r'(\[chara_new\s+' + \
-    r'name="([^"]+)"\s+)' + \
-    r'jname="[^"]+"\s+' + \
-    r'([^\]]+\])'
+VONAME_PATTERN = re.compile(
+    r'\[(?:voconfig)(?=\s+)'
+    r'.*?'
+    r'name="([^"]+)"\s+'
+    r'.*?'
+    r'\]'
 )
 
 with open('./names.json') as f:
     names = json.load(f)
 
-scenario_dir = Path('./data/app/data/scenario')
-ks_files = scenario_dir.rglob('*.ks')
+original_scenario_dir = Path('./data/original/data/scenario')
+translated_scenario_dir = Path('./data/translated/data/scenario')
+translated_json_dir = Path('./data/translated_json')
 
-for ks_file in ks_files:
-    relative_path = ks_file.relative_to(scenario_dir)
-    ks_basename = str(relative_path)
 
-    with open(ks_file) as f:
-        script = f.read()
+def name_replacer(match):
+    name = match.group(1)
+    if name not in names:
+        print(f'Warning: Name "{name}" not found for {original_ks_path.name}, skipping...')
+        return match.group(0)
+    return match.group(0).replace(name, names[name])
 
-    ## yuukai
-    i = 0
-    while True:
-        extra_json_path = Path(f'./data/translated_json/{ks_basename}.extra{i:02d}.json')
-        if not extra_json_path.exists():
-            break
+def message_replacer(match):
+    if "replace('あ" in match.group(0):
+        next(translated_messages)
+        return match.group(0)
 
-        translated_messages = load(str(extra_json_path))
+    translated_message = next(translated_messages)
+    assert translated_message.original == match.group(0), (translated_message, match.group(0))
 
-        original_list_str = str(list(map(lambda x: x.original, translated_messages)))
-        translated_list_str = str(list(map(lambda x: x.message, translated_messages)))
-        assert original_list_str in script, \
-                f'Original list string not found in {ks_basename}: {original_list_str}'
-        script = script.replace(original_list_str, translated_list_str)
-        i += 1
+    for tag in translated_message.tags:
+        if tag.startswith('TAG:'):
+            _tag = tag[4:]
+            assert _tag in translated_message.message, translated_message
 
-    ## Names
-    for match in NAME_PATTERN.finditer(script):
-        name = match.group(2)
-        if name not in names:
-            print(f'Warning: Name "{name}" not found for {ks_basename}. Skipping...')
-            continue
-        chara_new = match.group(1) + f'jname="{names[name]}"  ' + match.group(3)
-        script = script.replace(match.group(0), chara_new)
-        i += 1
+    if original_name := match.groupdict().get('name'):
+        name = names[original_name]
+        translated_message.message = translated_message.message.replace(original_name, name)
+
+    return translated_message.message
+
+def message_list_replacer(match):
+    original_list_str = ', '.join(match.group(0).split())
+    assert original_list_str == match.group(0)
+    translated_list_str = ', '.join(match.group(0).split())
+    return translated_list_str
+
+for original_ks_path in original_scenario_dir.rglob('*.ks'):
+    ks_relative_path = original_ks_path.relative_to(original_scenario_dir)
+    translated_ks_file = translated_scenario_dir / ks_relative_path
+    translated_ks_file.parent.mkdir(parents=True, exist_ok=True)
+    translated_json_path = translated_json_dir / ks_relative_path.with_suffix('.json')
+    script = original_ks_path.read_text()
 
     ## Messages
-    translated_json_path = Path(f'./data/translated_json/{ks_basename}.json')
     if translated_json_path.exists():
-        translated_messages = load(str(translated_json_path))
-        for translated_message in translated_messages:
-            if 'TIPS' in translated_message.tags:
-                o_subject, o_text = translated_message.original.split('\n', 1)
-                t_subject, t_text = translated_message.message.split('\n', 1)
-                translated_message.original = f'[showTips subject="{o_subject}" text="{o_text}"]'
-                translated_message.message = f'[showTips subject="{t_subject}" text="{t_text}"]'
-            assert translated_message.original in script, \
-                    f'Original message not found in {ks_basename}: {translated_message.original}'
-            script = script.replace(translated_message.original, translated_message.message, 1)
-        i+=1
+        translated_messages = iter(load(str(translated_json_path)))
+        script = MESSAGE_PATTERN.sub(message_replacer, script)
+        script = PTEXT_PATTERN.sub(message_replacer, script)
+        script = EVAL_TEXT_PATTERN.sub(message_replacer, script)
+        script = CONDITION_TEXT_PATTERN.sub(message_replacer, script)
+        _SENTINEL = object()
+        assert next(translated_messages, _SENTINEL) is _SENTINEL
 
-    if i > 0:
-        output_file = Path(f'./data/translated_ks/{ks_basename}')
-        output_file.parent.mkdir(parents=True, exist_ok=True)
-        with open(output_file, 'w') as f:
-            f.write(script)
+    ## Message Lists
+    for translated_list_json_path in translated_json_dir.rglob(f'{ks_relative_path.stem}.message_list_*.json'):
+        translated_messages = iter(load(str(translated_list_json_path)))
+        script = MESSAGE_LIST_PATTERN.sub(message_list_replacer, script)
+        _SENTINEL = object()
+        assert next(translated_messages, _SENTINEL) is _SENTINEL
+
+    ## Names
+    script = VONAME_PATTERN.sub(name_replacer, script)
+
+    translated_ks_file.write_text(script)
