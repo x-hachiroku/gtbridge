@@ -18,10 +18,10 @@ https://forums.rpgmakerweb.com/index.php?threads/a-list-for-text-commands-n-1-v-
 \V[n] Replaced by the value of the nth variable.
 \N[n] Replaced by the name of the nth actor.
 \P[n] Replaced by the name of the nth party member.
+\I[n] Draw the nth icon.
 \G    Replaced by the currency unit.
 
 \C[n] Draw the subsequent text in the nth color.
-\I[n] Draw the nth icon.
 
 \{    Increases the text size by one step.
 \}    Decreases the text size by one step.
@@ -47,43 +47,51 @@ def interpolation(s, actors):
     for match in PLACEHOLDER_PATTERN.finditer(s):
         p = match.group(0)
         tag = match.group(1).upper()
+        index = None
         if match.group(2):
             index = int(match.group(2))
 
-        # index should exist for N, NN, and V
         match tag:
             case 'N':
+                if index is None:
+                    continue
                 assert len(actors[index][0]) > 0
                 s = s.replace(p, actors[index][0], 1)
             case 'NN':
+                if index is None:
+                    continue
                 assert len(actors[index][1]) > 0
                 s = s.replace(p, actors[index][1], 1)
 
-            case 'V':
-                s = s.replace(p, str(index), 1)
-                tags.append(f'P:V:{index}')
+            # case 'V':
+            #     if index is None:
+            #         continue
+            #     s = s.replace(p, str(index), 1)
+            #     tags.append(f'P:V:{index}')
 
             case 'G':
-                s = s.replace(p, 'G', 1)
+                s = s.replace(p, actors['currency_unit'], 1)
 
-            case 'C'| 'I' | '{' | '}' | '<' | '>' | '$' | '!' | '^':
-                s = s.replace(p, '', 1)
-                tags.append(f'P:{tag}')
+            # case 'C' | 'I' | '{' | '}' | '<' | '>' | '$' | '!' | '^':
+            #     s = s.replace(p, '', 1)
+            #     tags.append(f'P:{tag}')
 
-            case '.':
-                s = s.replace(p, ' ', 1)
-                tags.append('P:W:.')
-            case '|':
-                s = s.replace(p, '\n', 1)
-                tags.append('P:W:|')
+            # case '.':
+            #     s = s.replace(p, ' ', 1)
+            #     tags.append('P:W:.')
+            # case '|':
+            #     s = s.replace(p, '\n', 1)
+            #     tags.append('P:W:|')
 
-    if '\\' in s:
-        tags.append('P:UNKNOWN')
+    # if '\\' in s.replace('\\n', ''):
+    #     tags.append('P:UNKNOWN')
 
     return (s, tags)
 
 
-C356_PATTERN = re.compile(r'([\x21-\xff]+ )(.*)( [\x21-\xff]+)')
+C356_PATTERN = re.compile(r'([\x21-\xff]+ )(.*)( [\x21-\xff]+)?')
+NAME_PATTERN = re.compile(r'^\\c\[\\v\[\d+\]\](.*)\\c\[0\]$')
+NAME_COLOR_PATTERN = re.compile(r'\\c\[[0-9a-zA-Z\[\]\\]+\]')
 
 def extract_list(l, message_list, actors):
     name = ''
@@ -99,8 +107,13 @@ def extract_list(l, message_list, actors):
                     continue # keep name for the next messages
 
             case 401:
-                if cmd['parameters'][0]:
-                    message_list.append(cmd['parameters'][0], name=name)
+                if text := cmd['parameters'][0]:
+                    if match := NAME_PATTERN.match(text):
+                        name = match.group(1)
+                        name = NAME_COLOR_PATTERN.sub('', name)
+                        continue
+                    else:
+                        message_list.append(text, name=name)
 
             case 102:
                 for s in cmd['parameters'][0]:
@@ -119,8 +132,13 @@ def extract_list(l, message_list, actors):
             case 356:
                 if cmd['parameters'][0]:
                     text = cmd['parameters'][0]
-                    pre, text, post = C356_PATTERN.match(text).groups()
-                    if pre != 'D_TEXT ':
+                    if match := C356_PATTERN.match(text):
+                        pre, text, post = match.groups()
+                        if post is None:
+                            post = ''
+                    else:
+                        continue
+                    if pre not in ('D_TEXT ', 'ShowInfo '):
                         continue
                     message_list.append(
                         text,
@@ -136,17 +154,44 @@ def extract_list(l, message_list, actors):
 
         name = ''
 
+def flush(message_list, actors, original_data_path):
+    for message in message_list.messages:
+        while CONTROL_PATTERN.match(message.message[:2]):
+            message.pre += message.message[:2]
+            message.message = message.message[2:]
+
+        while CONTROL_PATTERN.match(message.message[-2:]):
+            message.post = message.message[-2:] + message.post
+            message.message = message.message[:-2]
+
+        message.message, _tags = interpolation(message.message, actors)
+        message.tags += _tags
+
+        if (
+            message.name in ('CAPTION', 'OPTION', 'ARMOR', 'ITEM', 'SKILL', 'STATE')
+            and message.original in common_dict
+        ):
+            message.pre = common_dict[message.original]
+            message.message = ''
+            message.tags.clear()
+
+    original_json_path = json_dir / original_data_path.relative_to(data_dir)
+    original_json_path.parent.mkdir(parents=True, exist_ok=True)
+    message_list.flush(original_json_path)
+
+
 def main():
     message_list = MessageList()
 
-    for data in data_dir.rglob('data'):
-        if not data.is_dir():
+    for data_subdir in data_dir.rglob('data'):
+        if not data_subdir.is_dir():
             continue
 
         actors = {}
-        if (data / 'Actors.json').is_file():
-            actors_data = json.loads((data / 'Actors.json').read_text())
-            for actor in actors_data:
+
+        if (data_subdir / 'Actors.json').is_file():
+            data = json.loads((data_subdir / 'Actors.json').read_text(encoding='utf-8-sig'))
+            for actor in data:
                 if actor and 'id' in actor:
                     name = actor.get('name', '')
                     nickname = actor.get('nickname', '')
@@ -156,19 +201,34 @@ def main():
                     if nickname:
                         message_list.names[nickname] = 0xffff
 
-        for original_data_path in data.glob('*.json'):
-            data = json.loads(original_data_path.read_text())
+        if (data_subdir / 'System.json').is_file():
+            data = json.loads((data_subdir / 'System.json').read_text(encoding='utf-8-sig'))
 
-            if original_data_path.name == 'System.json':
-                for key in ('basic', 'commands'):
-                    for s in data['terms'][key]:
-                        if s is not None:
-                            message_list.append(s, name='OPTION')
-                for _, v in data['terms']['messages'].items():
-                    if v:
-                        message_list.append(v, name='CAPTION')
+            currency_unit = 'G'
+            if 'currencyUnit' in data:
+                currency_unit = data['currencyUnit']
+                actors['currency_unit'] = currency_unit
+                message_list.append(currency_unit, name='CURRENCY UNIT')
 
-            elif original_data_path.name == 'Enemies.json':
+            for key in ('elements', 'equipTypes', 'skillTypes'):
+                for s in data[key]:
+                    if s is not None:
+                        message_list.append(s, name=key.upper()[:-1])
+            for key in ('basic', 'commands'):
+                for s in data['terms'][key]:
+                    if s is not None:
+                        message_list.append(s, name='OPTION')
+            for _, v in data['terms']['messages'].items():
+                if v:
+                    message_list.append(v, name='CAPTION')
+
+            flush(message_list, actors, data_subdir / 'System.json')
+
+
+        for original_data_path in data_subdir.glob('*.json'):
+            data = json.loads(original_data_path.read_text(encoding='utf-8-sig'))
+
+            if original_data_path.name == 'Enemies.json':
                 for enemy in data:
                     if enemy and 'name' in enemy:
                         name, _ = interpolation(enemy['name'], actors)
@@ -178,10 +238,13 @@ def main():
             elif original_data_path.name in ('Armors.json', 'Items.json', 'Weapons.json'):
                 for item in data:
                     if item and 'name' in item and item['name']:
+                        assert '\n' not in item['name']
                         message_list.append(
                             f'{item["name"]}\n{item.get("description", "")}',
                             name=original_data_path.stem.upper()[:-1]
                         )
+                        if note := item.get('note', ''):
+                            message_list.append(note)
 
             elif original_data_path.name in ('Skills.json', 'States.json'):
                 for item in data:
@@ -219,34 +282,7 @@ def main():
                             if page and 'list' in page:
                                 extract_list(page['list'], message_list, actors)
 
-
-            for message in message_list.messages:
-                if message.pre and message.pre[-1] == '\\':
-                    message.pre = message.pre[:-1]
-                    message.message = '\\' + message.message
-
-                while CONTROL_PATTERN.match(message.message[:2]):
-                    message.pre += message.message[:2]
-                    message.message = message.message[2:]
-
-                while CONTROL_PATTERN.match(message.message[-2:]):
-                    message.post = message.message[-2:] + message.post
-                    message.message = message.message[:-2]
-
-                message.message, _tags = interpolation(message.message, actors)
-                message.tags += _tags
-
-                if (
-                    message.name in ('CAPTION', 'OPTION', 'ARMOR', 'ITEM', 'SKILL', 'STATE')
-                    and message.original in common_dict
-                ):
-                    message.pre = common_dict[message.original]
-                    message.message = ''
-                    message.tags.clear()
-
-            original_json_path = json_dir / original_data_path.relative_to(data_dir)
-            original_json_path.parent.mkdir(parents=True, exist_ok=True)
-            message_list.flush(original_json_path)
+            flush(message_list, actors, original_data_path)
 
     message_list.dump_stats('./names.json')
 
