@@ -7,3 +7,6 @@
 [submodule "games/rpgmaker/RPG-Maker-MV-Decrypter"]
 	path = games/rpgmaker/RPG-Maker-MV-Decrypter
 	url = git@github.com:x-hachiroku/RPG-Maker-MV-Decrypter.git
+[submodule "games/qlie/filepack"]
+	path = games/qlie/filepack
+	url = https://github.com/hz86/filepack.git

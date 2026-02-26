@@ -1,9 +1,13 @@
+import re
 import json
 from shutil import copyfile
 from pathlib import Path
 
 from gtbridge import load
-from extract import FREE_NAMES
+from extract import FREE_NAMES, PLACEHOLDER_PATTERN, NAME_PATTERN
+
+LABEL_PATTERN = re.compile(r'<[^>]*>')
+EXP_PATTERN = re.compile(r'[a-z]+\(.*?\)')
 
 origina_data_dir = Path('./data/original_data')
 translated_json_dir = Path('./data/translated_json')
@@ -12,6 +16,8 @@ translated_data_dir = Path('./data/translated_data')
 names_path = Path('./names.json')
 if names_path.is_file():
     names = json.loads(names_path.read_text())
+    names = sorted(names.items(), key=lambda x: -len(x[0]))
+    names = {k: v for k, v in names if k}
 else:
     print('Warning: names.json not found.')
     names = {}
@@ -31,9 +37,13 @@ def inject_list(l, translated):
 
             case 401:
                 if cmd['parameters'][0]:
-                    message = next(translated)
-                    assert cmd['parameters'][0] == message.original
-                    cmd['parameters'][0] = message.message
+                    if NAME_PATTERN.match(cmd['parameters'][0]):
+                        for name in names:
+                            cmd['parameters'][0] = cmd['parameters'][0].replace(name, names[name])
+                    else:
+                        message = next(translated)
+                        assert cmd['parameters'][0] == message.original, (cmd['parameters'][0], message.original)
+                        cmd['parameters'][0] = message.message
 
             case 102:
                 choices = cmd['parameters'][0]
@@ -59,7 +69,7 @@ def inject_list(l, translated):
 
             case 356:
                 if cmd['parameters'][0]:
-                    if cmd['parameters'][0].split(' ')[0] != 'D_TEXT':
+                    if cmd['parameters'][0].split(' ')[0] not in ('D_TEXT', 'ShowInfo'):
                         continue
                     message = next(translated)
                     assert cmd['parameters'][0] == message.original
@@ -76,7 +86,7 @@ def main():
     for original_data_path in origina_data_dir.rglob('*.json'):
         translated_data_path = translated_data_dir / original_data_path.relative_to(origina_data_dir)
         translated_data_path.parent.mkdir(parents=True, exist_ok=True)
-        data = json.loads(original_data_path.read_text())
+        data = json.loads(original_data_path.read_text(encoding='utf-8-sig'))
 
         if original_data_path.name in ('Actors.json', 'Enemies.json'):
             for actor in data:
@@ -126,11 +136,32 @@ def main():
                         assert count == message.message.count(FREE_NAMES[index]), message.original
                         message.message = message.message.replace(FREE_NAMES[index], tag)
 
-            assert message.original.upper().count('\\V') == message.message.count('\\V'), message.original
+            # assert message.original.upper().count('\\V') == message.message.count('\\V'), message.original
+            for match in PLACEHOLDER_PATTERN.finditer(message.original):
+                placeholder = match.group(0)
+                assert message.original.upper().count(placeholder) == message.message.upper().count(placeholder), (message.original, message.message)
+            for match in LABEL_PATTERN.finditer(message.original):
+                label = match.group(0)
+                assert message.original.count(label) == message.message.count(label) or ('SG説明' in message.message and 'SG説明' in label), (message.original, message.message)
+            for match in EXP_PATTERN.finditer(message.original):
+                if message.original.count(match.group(0)) != message.message.count(match.group(0)):
+                    print('Warning: EXP function count mismatch:', message.original, message.message)
 
         translated = iter(translated)
 
         if original_data_path.name == 'System.json':
+            if 'currencyUnit' in data:
+                message = next(translated)
+                assert data['currencyUnit'] == message.original, (data['currencyUnit'], message.original)
+                data['currencyUnit'] = message.message
+
+            for key in ('elements', 'equipTypes', 'skillTypes'):
+                for i, s in enumerate(data[key]):
+                    if s is not None:
+                        message = next(translated)
+                        assert s == message.original, (s, message.original)
+                        data[key][i] = message.message
+
             for key in ('basic', 'commands'):
                 for i, s in enumerate(data['terms'][key]):
                     if s is not None:
@@ -154,13 +185,20 @@ def main():
                     item['name'] = t_item_l[0]
                     assert item['description'] == o_item_l[1]
                     item['description'] = t_item_l[1]
+                    if note := item.get('note', ''):
+                        message = next(translated)
+                        assert note == message.original
+                        item['note'] = message.message
 
         elif original_data_path.name in ('Skills.json', 'States.json'):
             for item in data:
                 if item and 'name' in item and item['name']:
                     message = next(translated)
-                    o_skill_iter = iter(message.original.split('\n\n'))
-                    t_skill_iter = iter(message.message.split('\n\n'))
+                    o_skill_list = message.original.split('\n\n')
+                    t_skill_list = message.message.split('\n\n')
+                    assert len(o_skill_list) == len(t_skill_list), (message.original, message.message)
+                    o_skill_iter = iter(o_skill_list)
+                    t_skill_iter = iter(t_skill_list)
                     for field in ('name', 'description', 'message1', 'message2', 'message3', 'message4'):
                         if field in item and item[field]:
                             assert next(o_skill_iter) == item[field]

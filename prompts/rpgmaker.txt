@@ -1,0 +1,11 @@
+<Placeholders>
+A placeholder may be marked with a backslash. It may be a variable or a control code.
+Variables will get replaced during runtime, e.g.:
+\\v[3] - 3rd general variable
+\\i[4] - 4th icon
+Control codes affect text display after it, e.g.:
+\\c[1] - Change text color to color 1. Defaults to 0.
+\\{ - Increase text size
+Placeholders may be nested, e.g., `\\i[\\v[3]]`.
+Do not modify a placeholder; Use it directly in the output text.
+</Placeholders>
