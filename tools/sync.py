@@ -1,8 +1,15 @@
 import json
-from glob import glob
+from pathlib import Path
 
-for t in glob('./translated_json/**/*.json', recursive=True):
-    o = t.replace('translated_json', 'original_json')
+ORIGINAL_JSON_PATH = Path('./data/original_json')
+TRANSLATED_JSON_PATH = Path('./data/translated_json')
+
+for t in TRANSLATED_JSON_PATH.rglob('*.json'):
+    rel = t.relative_to(TRANSLATED_JSON_PATH)
+    o = ORIGINAL_JSON_PATH / rel
+    if not o.exists():
+        print(f'Warning: {o} does not exits')
+        continue
 
     with open(o, 'r') as f:
         original = json.load(f)
@@ -13,8 +20,7 @@ for t in glob('./translated_json/**/*.json', recursive=True):
 
     for i in range(len(original)):
         translated[i]['original'] = original[i]['original']
-        translated[i]['pre'] = original[i]['pre']
-        translated[i]['post'] = original[i]['post']
+        translated[i]['name'] = original[i]['name']
 
     with open(t, 'w') as f:
         json.dump(translated, f, indent=2, ensure_ascii=False)
