@@ -4,7 +4,7 @@ import argparse
 class Char:
     def __init__(self, byte_data, offset):
         self.offset = offset
-        self.char = byte_data[1::-1].decode('cp932')
+        self.char = byte_data[1::-1].strip(b'\x00').decode('cp932')
         self.coords = struct.unpack('<IIII', byte_data[4:20])
     def __str__(self):
         return f"{hex(self.offset)}\t{self.char}\t{self.coords}"
