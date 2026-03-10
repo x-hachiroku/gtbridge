@@ -7,3 +7,6 @@
 [submodule "games/qlie/filepack"]
 	path = games/qlie/filepack
 	url = https://github.com/hz86/filepack.git
+[submodule "games/livemaker/pylivemaker"]
+	path = games/livemaker/pylivemaker
+	url = git@github.com:x-hachiroku/pylivemaker.git
